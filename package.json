@@ -27,6 +27,7 @@
   "dependencies": {
     "optimist": "*",
     "portchecker": "~0.1.0",
-    "express": "~2.5.8"
+    "express": "~2.5.8",
+    "distribute": "~0.1.4"
   }
 }

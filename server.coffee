@@ -65,8 +65,22 @@ provision = (repo, hash, callback)->
 				p.stderr.on('data', (data)-> console.log(data))
 				p.stdout.setEncoding 'utf8'
 				p.stdout.on('data', (data)-> console.log(data))
-				processes[hash] = p
+				processes[hash] = { process: p, port}
 				callback(port)
+
+http = require('http').createServer().listen(8081)
+srv = require('distribute')(http)
+srv.use express.bodyParser()
+srv.use (req, res, next) ->
+	host = req.headers['x-host']
+	hash = if host then host.split('.')[0] else (req.body && req.body.commit || req.url.match(/\/\?([^\/]*)$/)[1])
+	p = processes[hash]
+	if not p
+		res.writeHead(404)
+		res.end("commit #{hash} not available")
+		return
+	console.log "proxy to port #{p.port}"
+	next(p.port)
 
 app = express.createServer()
 app.use express.bodyParser()

@@ -21,9 +21,6 @@ installRoot = __dirname + '/installed'
 mkdir = (dir)-> fs.mkdirSync dir if not path.existsSync dir
 mkdir dir for dir in [baseRepo, installRoot]
 
-hash = '215ea622cb0a82'
-
-
 checkout = (repo, hash, callback)->
 	repoName = repo.match(/\/([^\/\.]*).git/)[1]
 	repoPath = path.join baseRepo, repoName
@@ -53,19 +50,28 @@ provision = (repo, hash, callback)->
 				cwd: checkoutDir,
 				env:env
 			}
+
 			exec "npm run-script reset-db", runOptions, (code, out, err)->
 				console.log('reset db')
 				console.log code
 				console.log out.toString()
 				console.log err.toString()
 				
-				p = spawn 'npm', ['start'], runOptions
+				package = require(path.join(checkoutDir, 'package.json'))
+
+				startScript = package.scripts.start
+				cmdParts = startScript.split ' '
+				args = cmdParts.splice(1)
+				console.log(cmdParts[0])
+				console.log args
+				p = spawn cmdParts[0], args, runOptions
 
 				p.stderr.setEncoding 'utf8'
 				p.stderr.on('data', (data)-> console.log(data))
 				p.stdout.setEncoding 'utf8'
 				p.stdout.on('data', (data)-> console.log(data))
 				processes[hash] = { process: p, port}
+
 				callback(port)
 
 http = require('http').createServer().listen(8081)
@@ -95,6 +101,8 @@ app.post '/deploy', (req, res)->
 		console.log Object.keys(processes)
 		res.json {repo, hash, port}
 
+app.get '/online', (req, res)->
+	res.json Object.keys(processes)
 
 
 app.listen(8080)

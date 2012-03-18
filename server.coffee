@@ -74,19 +74,24 @@ provision = (repo, hash, callback)->
 
 				callback(port)
 
-http = require('http').createServer().listen(8081)
-srv = require('distribute')(http)
-srv.use express.bodyParser()
-srv.use (req, res, next) ->
-	host = req.headers['x-host']
-	hash = if host then host.split('.')[0] else (req.body && req.body.commit || req.url.match(/\/\?([^\/]*)$/)[1])
+httpProxy = require("http-proxy")
+httpProxy.createServer((req, res, proxy) ->
+	host = if req.headers.host isnt 'localhost' then req.headers.host else req.headers['x-host']
+	hash = if host then host.split('.')[0] else req.url.match(/\/\?([^\/]*)$/)[1]
 	p = processes[hash]
 	if not p
 		res.writeHead(404)
 		res.end("commit #{hash} not available")
 		return
 	console.log "proxy to port #{p.port}"
-	next(p.port)
+	buffer = httpProxy.buffer(req)	
+	proxy.proxyRequest req, res,
+		host: "localhost"
+		port: p.port
+		buffer: buffer
+).listen 8081
+
+
 
 app = express.createServer()
 app.use express.bodyParser()

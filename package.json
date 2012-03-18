@@ -28,6 +28,7 @@
     "optimist": "*",
     "portchecker": "~0.1.0",
     "express": "~2.5.8",
-    "distribute": "~0.1.4"
+    "distribute": "~0.1.4",
+    "http-proxy": "~0.8.0"
   }
 }
